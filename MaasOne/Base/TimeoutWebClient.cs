@@ -84,6 +84,7 @@ namespace MaasOne.Base
             if (ss.UserSettings.CookiesInternal != null) wr.CookieContainer = ss.UserSettings.CookiesInternal;
             if (ss.UserSettings.ContentTypeInternal != string.Empty) wr.ContentType = ss.UserSettings.ContentTypeInternal;
             this.AddHeaders(wr, ss.UserSettings.GetAdditionalHeadersInternal);
+            wr.UserAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/6.0;)";
             return wr;
         }
 
