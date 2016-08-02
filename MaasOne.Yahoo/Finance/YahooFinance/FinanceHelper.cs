@@ -168,7 +168,7 @@ namespace MaasOne.Finance.YahooFinance
 
         public static double GetStringMillionFactor(string s)
         {
-            if (s.EndsWith("T") || s.EndsWith("K"))
+            if (s.ToUpper().EndsWith("T") || s.ToUpper().EndsWith("K"))
             {
                 return 1.0 / 1000;
             }

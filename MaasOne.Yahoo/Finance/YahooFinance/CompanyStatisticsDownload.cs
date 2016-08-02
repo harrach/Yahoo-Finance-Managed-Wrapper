@@ -245,10 +245,10 @@ namespace MaasOne.Finance.YahooFinance
                         if (tempNode != null) ctiValues[6] = FinanceHelper.ParseToDouble(tempNode.Value);
 
                         tempNode = XPath.GetElement("//tr[@data-reactid=\"AVG_VOL_3_MONTH\"]/td[2]", sphNode, true);
-                        if (tempNode != null) ctiValues[7] = FinanceHelper.GetMillionValue(tempNode.Value);
+                        if (tempNode != null) ctiValues[7] = FinanceHelper.GetMillionValue(tempNode.Value) * 1000;
 
                         tempNode = XPath.GetElement("//tr[@data-reactid=\"AVG_VOL_10_DAY\"]/td[2]", sphNode, true);
-                        if (tempNode != null) ctiValues[8] = FinanceHelper.GetMillionValue(tempNode.Value);
+                        if (tempNode != null) ctiValues[8] = FinanceHelper.GetMillionValue(tempNode.Value) * 1000;
 
                         tempNode = XPath.GetElement("//tr[@data-reactid=\"SHARES_OUTSTANDING\"]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[9] = FinanceHelper.GetMillionValue(tempNode.Value);
