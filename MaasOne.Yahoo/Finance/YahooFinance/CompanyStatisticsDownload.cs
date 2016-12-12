@@ -94,48 +94,65 @@ namespace MaasOne.Finance.YahooFinance
                 System.Globalization.CultureInfo convCulture = new System.Globalization.CultureInfo("en-US");
                 XDocument doc = MyHelper.ParseXmlDocument(stream);
                 XElement resultNode = XPath.GetElement("//div[data-reactid]", doc);
+                XElement[] divs = XPath.GetElements("//div[@data-reactid]", resultNode, true);
 
                 if (resultNode != null)
                 {
-
+                    XElement vmNode = null;
+                    // Valuation Measures
+                    for (int i = divs.Length - 1; i > 0; i--)
+                    {
+                        if (divs[i].InnerXml().ToLower().Contains("valuation measures"))
+                        {
+                            vmNode = divs[i];
+                            break;
+                        }
+                    }
                     XElement tempNode = null;
-                    XElement vmNode = XPath.GetElement("//div[@data-reactid=\"VALUATION_MEASURES\"]", resultNode, true);
                     double[] vmValues = new double[9];
                     if (vmNode != null)
                     {
-                        tempNode = XPath.GetElement("//tr/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[0] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"ENTERPRISE_VALUE\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[2]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[1] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TRAILING_PE\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[3]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[2] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"FORWARD_PE\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[4]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[3] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"PEG_RATIO_5_YR\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[5]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[4] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"PRICE_TO_SALES\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[6]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[5] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"PRICE_TO_BOOK\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[7]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[6] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"ENTERPRISE_VALUE_TO_REVENUE\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[8]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[7] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"ENTERPRISE_VALUE_TO_EBITDA\"]/td[2]", vmNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[9]/td[2]", vmNode, true);
                         if (tempNode != null) vmValues[8] = FinanceHelper.ParseToDouble(tempNode.Value);
 
                     }
 
                     CompanyValuationMeasures vm = new CompanyValuationMeasures(vmValues);
 
-
-                    XElement fyNode = XPath.GetElement("//div[@data-reactid=\"FINANCIAL_HIGHLIGHTS\"]", resultNode, true);
+                    XElement fyNode = null;
+                    // Fiscal Year
+                    for (int i = divs.Length - 1; i > 0; i--)
+                    {
+                        if (divs[i].InnerXml().ToLower().Contains("fiscal year"))
+                        {
+                            fyNode = divs[i - 1];
+                            break;
+                        }
+                    }
 
                     DateTime fiscalYEnds = new DateTime();
                     DateTime mostRecQutr = new DateTime();
@@ -143,76 +160,86 @@ namespace MaasOne.Finance.YahooFinance
 
                     if (fyNode != null)
                     {
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"FISCAL_YEAR_ENDS\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr/td[2]", fyNode, true);
                         if (tempNode != null) fiscalYEnds = FinanceHelper.ParseToDateTime(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"MOST_RECENT_QUARTER\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[2]/td[2]", fyNode, true);
                         if (tempNode != null) mostRecQutr = FinanceHelper.ParseToDateTime(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"PROFIT_MARGIN\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[0] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"OPERATING_MARGIN\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[2]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[1] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"RETURN_ON_ASSETS\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[2] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"RETURN_ON_EQUITY\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[2]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[3] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"REVENUE\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[4] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"REVENUE_PER_SHARE\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr[2]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[5] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"QUARTERLY_REVENUE_GROWTH\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr[3]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[6] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"GROSS_PROFIT\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr[4]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[7] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TD_EBITDA\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr[5]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[8] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"NET_INCOME_AVI_TO_COMMON\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr[6]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[9] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"DILUTED_EPS\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr[7]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[10] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"QUARTERLY_EARNINGS_GROWTH\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[4]/table/tbody/tr[8]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[11] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TOTAL_CASH\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[5]/table/tbody/tr/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[12] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TOTAL_CASH_PER_SHARE\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[5]/table/tbody/tr[2]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[13] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TOTAL_DEBT\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[5]/table/tbody/tr[3]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[14] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TOTAL_DEBT_TO_EQUITY\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[5]/table/tbody/tr[4]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[15] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"CURRENT_RATIO\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[5]/table/tbody/tr[5]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[16] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"BOOK_VALUE_PER_SHARE\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[5]/table/tbody/tr[6]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[17] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"OPERATING_CASH_FLOW\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[6]/table/tbody/tr/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[18] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"LEVERED_FREE_CASH_FLOW\"]/td[2]", fyNode, true);
+                        tempNode = XPath.GetElement("//div/div[6]/table/tbody/tr[2]/td[2]", fyNode, true);
                         if (tempNode != null) fhValues[19] = FinanceHelper.GetMillionValue(tempNode.Value);
                     }
 
                     CompanyFinancialHighlights fh = new CompanyFinancialHighlights(fiscalYEnds, mostRecQutr, fhValues);
 
-                    XElement sphNode = XPath.GetElement("//div[@data-reactid=\"TRADING_INFORMATION\"]", resultNode, true);
+                    XElement sphNode = null;
+
+                    // Trading Information
+                    for (int i = divs.Length - 1; i > 0; i--)
+                    {
+                        if (divs[i].InnerXml().ToLower().Contains("stock price history"))
+                        {
+                            sphNode = divs[i - 1];
+                            break;
+                        }
+                    }
 
                     double[] ctiValues = new double[23];
                     DateTime exDivDate = new DateTime();
@@ -223,82 +250,82 @@ namespace MaasOne.Finance.YahooFinance
                     if (sphNode != null)
                     {
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"BETA\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[0] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"52_WEEK_CHANGE\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[2]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[1] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"SP500_52_WEEK_CHANGE\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[3]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[2] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TD_52_WK_HIGH\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[4]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[3] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TD_52_WK_LOW\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[5]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[4] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"50_DAY_MOVING_AVG\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[6]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[5] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"200_DAY_MOVING_AVG\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//tbody/tr[7]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[6] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"AVG_VOL_3_MONTH\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[7] = FinanceHelper.GetMillionValue(tempNode.Value) * 1000;
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"AVG_VOL_10_DAY\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[2]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[8] = FinanceHelper.GetMillionValue(tempNode.Value) * 1000;
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"SHARES_OUTSTANDING\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[3]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[9] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"SHARES_FLOAT\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[4]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[10] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"PERCENT_HELD_BY_INSIDERS\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[5]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[11] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"PERCENT_HELD_BY_INSTITUTIONS\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[6]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[12] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"SHARES_SHORT\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[7]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[13] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"SHORT_RATIO\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[8]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[14] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"SHORT_PERCENT_OF_FLOAT\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[9]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[15] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"SHARES_SHORT_PRIOR_MONTH\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[2]/table/tbody/tr[10]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[16] = FinanceHelper.GetMillionValue(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"FORWARD_ANNUAL_DIVIDEND_RATE\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[17] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"FORWARD_ANNUAL_DIVIDEND_YIELD\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[2]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[18] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TRAILING_ANNUAL_DIVIDEND_RATE\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[3]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[19] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"TRAILING_ANNUAL_DIVIDEND_YIELD\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[4]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[20] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"5_YEAR_AVERAGE_DIVIDEND_YIELD\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[5]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[21] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"PAYOUT_RATIO\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[6]/td[2]", sphNode, true);
                         if (tempNode != null) ctiValues[22] = FinanceHelper.ParseToDouble(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"DIVIDEND_DATE\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[7]/td[2]", sphNode, true);
                         if (tempNode != null) divDate = FinanceHelper.ParseToDateTime(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"EX_DIVIDEND_DATE\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[8]/td[2]", sphNode, true);
                         if (tempNode != null) exDivDate = FinanceHelper.ParseToDateTime(tempNode.Value);
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"LAST_SPLIT_FACTOR\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[9]/td[2]", sphNode, true);
                         if (tempNode != null)
                         {
                             string[] txt = tempNode.Value.Split('/');
@@ -309,7 +336,7 @@ namespace MaasOne.Finance.YahooFinance
                             }
                         }
 
-                        tempNode = XPath.GetElement("//tr[@data-reactid=\"LAST_SPLIT_DATE\"]/td[2]", sphNode, true);
+                        tempNode = XPath.GetElement("//div/div[3]/table/tbody/tr[10]/td[2]", sphNode, true);
                         if (tempNode != null) splitDate = FinanceHelper.ParseToDateTime(tempNode.Value);
 
                     }
