@@ -93,11 +93,11 @@ namespace MaasOne.Finance.YahooFinance
             {
                 System.Globalization.CultureInfo convCulture = new System.Globalization.CultureInfo("en-US");
                 XDocument doc = MyHelper.ParseXmlDocument(stream);
-                XElement resultNode = XPath.GetElement("//div[data-reactid]", doc);
-                XElement[] divs = XPath.GetElements("//div[@data-reactid]", resultNode, true);
+                XElement resultNode = XPath.GetElement("//div[data-reactid]", doc);                
 
                 if (resultNode != null)
                 {
+                    XElement[] divs = XPath.GetElements("//div[@data-reactid]", resultNode, true);
                     XElement vmNode = null;
                     // Valuation Measures
                     for (int i = divs.Length - 1; i > 0; i--)
